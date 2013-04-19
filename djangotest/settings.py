@@ -1,3 +1,4 @@
+import os
 # Django settings for djangotest project.
 
 DEBUG = True
@@ -9,17 +10,32 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'D:/Eugine/python/db/djangotest_sqlite3.db',                      # Or path to database file if using sqlite3.
-        # The following settings are not used with sqlite3:
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
-        'PORT': '',                      # Set to empty string for default.
+if 'VCAP_SERVICES' in os.environ:
+    import json
+    vcap_services = json.loads(os.environ['VCAP_SERVICES'])
+    mysql_srv = vcap_services['mysql-5.1'][0]
+    cred = mysql_srv['credentials']
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': cred['name'],
+            'USER': cred['user'],
+            'PASSWORD': cred['password'],
+            'HOST': cred['hostname'],
+            'PORT': cred['port'],
+            }
+        }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': 'djangotest_sqlite3.db',
+            'USER': '',
+            'PASSWORD': '',
+            'HOST': '',
+            'PORT': '',
+        }
     }
-}
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
@@ -107,10 +123,12 @@ ROOT_URLCONF = 'djangotest.urls'
 # Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = 'djangotest.wsgi.application'
 
+PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
+    os.path.join(PROJECT_ROOT, "templates"),
 )
 
 INSTALLED_APPS = (
@@ -122,6 +140,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.admindocs',
+    'esoapp',
 )
 
 # A sample logging configuration. The only tangible logging
